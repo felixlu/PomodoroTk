@@ -11,74 +11,70 @@ date:    2011-08-16
 '''
 
 from tkinter import Tk, Entry, Label, Button, Frame, IntVar, StringVar
-
 from tkinter.messagebox import showinfo, showerror
 
 
 class PyPomodoro(Frame):
 
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.parent = parent
-        self.grid(row=0, column=0)
-
-        # create widgets
-        
+    # create widgets        
+    def create_widgets(self):
         # create Pomodoro label and input field
-        self.pomodoro_lbl = Label(parent, text='Pomodoro:')
+        self.pomodoro_lbl = Label(self.parent, text='Pomodoro:')
         self.pomodoro_lbl.grid(row=0, column=0, sticky='E')
 
         self.pomodoro_time_value = StringVar()
-        self.pomodoro_time_entry = Entry(parent, 
+        self.pomodoro_time_entry = Entry(self.parent, 
                                  textvariable=self.pomodoro_time_value, 
-                                 justify='right', width=6)
+                                 justify='right', width=11)
         self.pomodoro_time_entry.grid(row=0, column=1)
-        self.pomodoro_time_value.set(25)
 
-        self.pomodoro_min_lbl = Label(parent, text='minutes')
+        self.pomodoro_min_lbl = Label(self.parent, text='minutes')
         self.pomodoro_min_lbl.grid(row=0, column=2, sticky='W')
 
         # create Rest Time label and input field
-        self.rest_time_lbl = Label(parent, text='Rest Time:')
+        self.rest_time_lbl = Label(self.parent, text='Rest Time:')
         self.rest_time_lbl.grid(row=1, column=0, sticky='E')
 
         self.rest_time_value = StringVar()
-        self.rest_time_entry = Entry(parent, 
+        self.rest_time_entry = Entry(self.parent, 
                                      textvariable=self.rest_time_value, 
-                                     justify='right', width=6)
+                                     justify='right', width=11)
         self.rest_time_entry.grid(row=1, column=1)
-        self.rest_time_value.set(5)
 
-        self.rest_time_min_lbl = Label(parent, text='minutes')
+        self.rest_time_min_lbl = Label(self.parent, text='minutes')
         self.rest_time_min_lbl.grid(row=1, column=2, sticky='W')
 
         # create buttons
-        self.start_btn = Button(parent, text='Start', 
-                                command=self.start, width=7)
+        self.start_btn = Button(self.parent, text='Start', 
+                                command=self.start_cmd, width=8)
         self.start_btn.grid(row=2, column=0)
 
-        self.pause_btn = Button(parent, text='Pause', 
-                                command=self.pause, 
-                                state='disabled', width=7)
+        self.pause_btn = Button(self.parent, text='Pause', 
+                                command=self.pause_cmd, 
+                                state='disabled', width=8)
         self.pause_btn.grid(row=2, column=1)
 
-        self.stop_btn = Button(parent, text='Stop', command=self.stop, 
-                              state='disabled', width=7)
+        self.stop_btn = Button(self.parent, text='Stop', 
+                               command=self.stop_cmd, 
+                               state='disabled', width=8)
         self.stop_btn.grid(row=2, column=2)
 
         # create label to display the Left Time
-        self.status_lbl = Label(parent, text='Idle', 
-                                font=('times', 20, 'bold'), bg='red')
-        self.status_lbl.grid(row=3, column=0, sticky='EW')
+        self.status_lbl = Label(self.parent, text='Idle', 
+                                font=('times', 12, 'bold'), bg='red')
+        self.status_lbl.grid(row=3, column=0, sticky='EWNS')
 
         self.left_time_value = IntVar()
-        self.left_time_lbl = Label(parent, 
+        self.left_time_lbl = Label(self.parent, 
                                    textvariable=self.left_time_value,
                                    font=('times', 20, 'bold'), bg='red')
-        self.left_time_lbl.grid(row=3, column=1, columnspan=2, sticky='EW')
-        self.left_time_value.set('0:00:00')
+        self.left_time_lbl.grid(row=3, column=1, columnspan=2, sticky='EWNS')
 
         # data initialize
+        self.pomodoro_time_value.set(25)
+        self.rest_time_value.set(5)
+        self.left_time_value.set('00:00')
+
         self.pomodoro_time = 0
         self.rest_time = 0
         self.left_time = 0
@@ -90,7 +86,7 @@ class PyPomodoro(Frame):
                             # 2 for manual stop
 
     # command of Start button
-    def start(self):
+    def start_cmd(self):
         # get verified input
         self.pomodoro_time = self.get_int(
                                     self.pomodoro_time_value.get()) * 60
@@ -115,7 +111,7 @@ class PyPomodoro(Frame):
             self.invalid_input_msg_of('Pomodoro')
 
     # command of Pause button
-    def pause(self):
+    def pause_cmd(self):
         # continue
         if self.paused:
             # switch pause indicator
@@ -125,8 +121,8 @@ class PyPomodoro(Frame):
                 self.status_lbl.configure(text='Working', bg='green')
                 self.left_time_lbl.configure(bg='green')
             elif self.status == 1:
-                self.status_lbl.configure(text='Resting', bg='blue')
-                self.left_time_lbl.configure(bg='blue')
+                self.status_lbl.configure(text='Resting', bg='#86ceff')
+                self.left_time_lbl.configure(bg='#86ceff')
             else:
                 pass
             # continue count down
@@ -142,7 +138,7 @@ class PyPomodoro(Frame):
             self.left_time_lbl.after_cancel(self.cancel_id)
 
     # command of Stop button
-    def stop(self):
+    def stop_cmd(self):
         # reset pause indicator
         self.paused = False
         self.start_btn.configure(state='normal')
@@ -175,8 +171,8 @@ class PyPomodoro(Frame):
                 # reset Left Time to Rest Time
                 self.left_time = self.rest_time
                 # update status label
-                self.status_lbl.configure(text='Resting', bg='blue')
-                self.left_time_lbl.configure(bg='blue')
+                self.status_lbl.configure(text='Resting', bg='#86ceff')
+                self.left_time_lbl.configure(bg='#86ceff')
                 # continue count down for Rest
                 self.update()
             # Rest finished
@@ -210,7 +206,7 @@ class PyPomodoro(Frame):
     # display message for invalid input
     def invalid_input_msg_of(self, var_name):
         showerror('Invalid Input', 
-             '{0} must be Integer and greater than 0.'.format(var_name))
+             'Invalid input. "{0}" must be Integer and greater than 0.'.format(var_name))
 
     # convert the second count into HH:MM:SS format
     def time_format(self, time_in_sec):
@@ -218,10 +214,18 @@ class PyPomodoro(Frame):
         time_sec = time_in_sec % 60
         if time_hrs:
             time_min = (time_in_sec - time_hrs * 3600) // 60
+            return '{0}:{1:0>2}:{2:0>2}'.format(time_hrs ,
+                                                time_min, time_sec)
         else:
             time_min = time_in_sec // 60
-        return '{0}:{1:0>2}:{2:0>2}'.format(time_hrs, 
-                                            time_min, time_sec)
+            return '{0:0>2}:{1:0>2}'.format(time_min, time_sec)
+
+
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
+        self.grid(row=0, column=0)
+        self.create_widgets()
 
 
 app = Tk()
