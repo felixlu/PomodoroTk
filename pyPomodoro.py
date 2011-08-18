@@ -54,24 +54,28 @@ class PyPomodoro(Frame):
 
         # create buttons
         self.start_btn = Button(parent, text='Start', 
-                                command=self.start, width=5)
+                                command=self.start, width=7)
         self.start_btn.grid(row=2, column=0)
 
         self.pause_btn = Button(parent, text='Pause', 
                                 command=self.pause, 
-                                state='disabled', width=5)
+                                state='disabled', width=7)
         self.pause_btn.grid(row=2, column=1)
 
         self.stop_btn = Button(parent, text='Stop', command=self.stop, 
-                              state='disabled', width=5)
+                              state='disabled', width=7)
         self.stop_btn.grid(row=2, column=2)
 
         # create label to display the Left Time
+        self.status_lbl = Label(parent, text='Idle', 
+                                font=('times', 20, 'bold'), bg='red')
+        self.status_lbl.grid(row=3, column=0, sticky='EW')
+
         self.left_time_value = IntVar()
         self.left_time_lbl = Label(parent, 
                                    textvariable=self.left_time_value,
                                    font=('times', 20, 'bold'), bg='red')
-        self.left_time_lbl.grid(row=3, column=0, columnspan=3)
+        self.left_time_lbl.grid(row=3, column=1, columnspan=2, sticky='EW')
         self.left_time_value.set('0:00:00')
 
         # data initialize
@@ -98,6 +102,7 @@ class PyPomodoro(Frame):
                 self.start_btn.configure(state='disabled')
                 self.pause_btn.configure(state='normal')
                 self.stop_btn.configure(state='normal')
+                self.status_lbl.configure(text='Working', bg='green')
                 self.left_time_lbl.configure(bg='green')
                 # reset status indicator
                 self.status = 0
@@ -116,7 +121,14 @@ class PyPomodoro(Frame):
             # switch pause indicator
             self.paused = False
             self.pause_btn.configure(text='Pause')
-            self.left_time_lbl.configure(bg='green')
+            if self.status == 0:
+                self.status_lbl.configure(text='Working', bg='green')
+                self.left_time_lbl.configure(bg='green')
+            elif self.status == 1:
+                self.status_lbl.configure(text='Resting', bg='blue')
+                self.left_time_lbl.configure(bg='blue')
+            else:
+                pass
             # continue count down
             self.update()
         # pause
@@ -124,6 +136,7 @@ class PyPomodoro(Frame):
             # switch pause indicator
             self.paused = True
             self.pause_btn.configure(text='Continue')
+            self.status_lbl.configure(text='Paused', bg='yellow')
             self.left_time_lbl.configure(bg='yellow')
             # pause count down
             self.left_time_lbl.after_cancel(self.cancel_id)
@@ -135,6 +148,7 @@ class PyPomodoro(Frame):
         self.start_btn.configure(state='normal')
         self.pause_btn.configure(text='Pause', state='disabled')
         self.stop_btn.configure(state='disabled')
+        self.status_lbl.configure(text='Idle', bg='red')
         self.left_time_lbl.configure(bg='red')
         # set manual stop status
         self.status = 2
@@ -160,6 +174,9 @@ class PyPomodoro(Frame):
                          self.time_format(self.pomodoro_time)))
                 # reset Left Time to Rest Time
                 self.left_time = self.rest_time
+                # update status label
+                self.status_lbl.configure(text='Resting', bg='blue')
+                self.left_time_lbl.configure(bg='blue')
                 # continue count down for Rest
                 self.update()
             # Rest finished
@@ -169,6 +186,7 @@ class PyPomodoro(Frame):
                 self.start_btn.configure(state='normal')
                 self.pause_btn.configure(text='Pause', state='disabled')
                 self.stop_btn.configure(state='disabled')
+                self.status_lbl.configure(text='Idle', bg='red')
                 self.left_time_lbl.configure(bg='red')
             # manual stopped
             else:

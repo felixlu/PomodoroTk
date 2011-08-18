@@ -1,0 +1,13 @@
+Features to be impletmented:
+
+ * Refactor code: Unify Status & Widget update methods.
+
+ * Get system wide focus when messagebox shows.
+
+ * Switch to Rest when Working, rather than Stop the whole Pomodoro.
+
+ * Add sound and icon.
+
+ * Task Log.
+
+ * Application activity records.
