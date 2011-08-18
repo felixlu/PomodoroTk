@@ -80,10 +80,7 @@ class PyPomodoro(Frame):
         self.left_time = 0
         self.paused = False # indicator of pause status
         self.cancel_id = 0  # used when canceling .after
-        self.status = 0     # indicator of Pomodoro or Rest status
-                            # 0 for Pomodoro start and finish
-                            # 1 for Rest and auto finish
-                            # 2 for manual stop
+        self.status = 'I'   # indicator of status: I, W, PW, R, PR, C
 
     # command of Start button
     def start_cmd(self):
@@ -101,7 +98,8 @@ class PyPomodoro(Frame):
                 self.status_lbl.configure(text='Working', bg='green')
                 self.left_time_lbl.configure(bg='green')
                 # reset status indicator
-                self.status = 0
+                self.status = 'W'
+                self.paused = False
                 self.left_time = self.pomodoro_time
                 # start count down for Pomodoro
                 self.update()
@@ -117,10 +115,10 @@ class PyPomodoro(Frame):
             # switch pause indicator
             self.paused = False
             self.pause_btn.configure(text='Pause')
-            if self.status == 0:
+            if self.status == 'W':
                 self.status_lbl.configure(text='Working', bg='green')
                 self.left_time_lbl.configure(bg='green')
-            elif self.status == 1:
+            elif self.status == 'R':
                 self.status_lbl.configure(text='Resting', bg='#86ceff')
                 self.left_time_lbl.configure(bg='#86ceff')
             else:
@@ -147,7 +145,7 @@ class PyPomodoro(Frame):
         self.status_lbl.configure(text='Idle', bg='red')
         self.left_time_lbl.configure(bg='red')
         # set manual stop status
-        self.status = 2
+        self.status = 'C'
         # terminal count down
         self.left_time = 0
         self.update()
@@ -163,20 +161,20 @@ class PyPomodoro(Frame):
                 self.cancel_id = self.left_time_lbl.after(1000, 
                                                           self.update)
             # Pomodoro finished
-            elif self.status == 0:
-                self.status = 1
+            elif self.status == 'W':
                 showinfo('Information', 'You have worked for {0}, '
                          'have a break now.'.format(
                          self.time_format(self.pomodoro_time)))
                 # reset Left Time to Rest Time
                 self.left_time = self.rest_time
-                # update status label
+                # update status and label
+                self.status = 'R'
                 self.status_lbl.configure(text='Resting', bg='#86ceff')
                 self.left_time_lbl.configure(bg='#86ceff')
                 # continue count down for Rest
                 self.update()
             # Rest finished
-            elif self.status == 1:
+            elif self.status == 'R':
                 showinfo('Information', 'You have finished a Pomodoro '
                          'cycle. You can go ahead to the next one.')
                 self.start_btn.configure(state='normal')
