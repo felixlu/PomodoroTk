@@ -6,8 +6,8 @@ PyPomodoro is a simple timer based on The Pomodoro Technique
 ( www.pomodorotechnique.com ), written in Python 3 and Tkinter.
 author:  Felix Lu
 email:   lugh82@gmail.com
-version: 0.1
-date:    2011-08-16
+version: 0.2
+date:    2011-08-20
 '''
 
 from tkinter import Tk, Entry, Label, Button, Frame, IntVar, StringVar
@@ -16,15 +16,15 @@ from tkinter.messagebox import showinfo, showerror
 
 class PyPomodoro(Frame):
 
-    # create widgets        
+    # create widgets
     def create_widgets(self):
         # create Pomodoro label and input field
         self.pomodoro_lbl = Label(self.parent, text='Pomodoro:')
         self.pomodoro_lbl.grid(row=0, column=0, sticky='E')
 
         self.pomodoro_time_value = StringVar()
-        self.pomodoro_time_entry = Entry(self.parent, 
-                                 textvariable=self.pomodoro_time_value, 
+        self.pomodoro_time_entry = Entry(self.parent,
+                                 textvariable=self.pomodoro_time_value,
                                  justify='right', width=11)
         self.pomodoro_time_entry.grid(row=0, column=1)
 
@@ -36,8 +36,8 @@ class PyPomodoro(Frame):
         self.rest_time_lbl.grid(row=1, column=0, sticky='E')
 
         self.rest_time_value = StringVar()
-        self.rest_time_entry = Entry(self.parent, 
-                                     textvariable=self.rest_time_value, 
+        self.rest_time_entry = Entry(self.parent,
+                                     textvariable=self.rest_time_value,
                                      justify='right', width=11)
         self.rest_time_entry.grid(row=1, column=1)
 
@@ -45,110 +45,132 @@ class PyPomodoro(Frame):
         self.rest_time_min_lbl.grid(row=1, column=2, sticky='W')
 
         # create buttons
-        self.start_btn = Button(self.parent, text='Start', 
+        self.start_btn = Button(self.parent,
                                 command=self.start_cmd, width=8)
-        self.start_btn.grid(row=2, column=0)
+        self.start_btn.grid(row=2, column=2)
 
-        self.pause_btn = Button(self.parent, text='Pause', 
-                                command=self.pause_cmd, 
-                                state='disabled', width=8)
-        self.pause_btn.grid(row=2, column=1)
+        self.cancel_btn = Button(self.parent,
+                                command=self.cancel_cmd, width=8)
+        self.cancel_btn.grid(row=2, column=0)
 
-        self.stop_btn = Button(self.parent, text='Stop', 
-                               command=self.stop_cmd, 
-                               state='disabled', width=8)
-        self.stop_btn.grid(row=2, column=2)
+        self.rest_btn = Button(self.parent,
+                               command=self.rest_cmd, width=8)
+        self.rest_btn.grid(row=2, column=1)
 
         # create label to display the Left Time
-        self.status_lbl = Label(self.parent, text='Idle', 
-                                font=('times', 12, 'bold'), bg='red')
+        self.status_lbl = Label(self.parent, font=('times', 12, 'bold'))
         self.status_lbl.grid(row=3, column=0, sticky='EWNS')
 
         self.left_time_value = IntVar()
-        self.left_time_lbl = Label(self.parent, 
-                                   textvariable=self.left_time_value,
-                                   font=('times', 20, 'bold'), bg='red')
-        self.left_time_lbl.grid(row=3, column=1, columnspan=2, sticky='EWNS')
+        self.left_time_lbl = Label(self.parent,
+                                   font=('times', 20, 'bold'),
+                                   textvariable=self.left_time_value)
+        self.left_time_lbl.grid(row=3, column=1, columnspan=2,
+                                sticky='EWNS')
 
         # data initialize
         self.pomodoro_time_value.set(25)
         self.rest_time_value.set(5)
         self.left_time_value.set('00:00')
 
-        self.pomodoro_time = 0
-        self.rest_time = 0
-        self.left_time = 0
-        self.paused = False # indicator of pause status
-        self.cancel_id = 0  # used when canceling .after
-        self.status = 'I'   # indicator of status: I, W, PW, R, PR, C
+    # update widgets' status
+    def update_widgets(self, status):
+        if status == self.STATUS_IDLE:
+            self.start_btn.configure(text=self.LBL_START,
+                                     state='normal')
+            self.cancel_btn.configure(text=self.LBL_CANCEL,
+                                      state='disabled')
+            self.rest_btn.configure(text=self.LBL_REST,
+                                    state='disabled')
+            self.status_lbl.configure(text=self.STATUS_IDLE,
+                                      bg=self.COLOR_IDLE)
+            self.left_time_lbl.configure(bg=self.COLOR_IDLE)
+        elif status == self.STATUS_WORKING:
+            self.start_btn.configure(text=self.LBL_PAUSE)
+            self.cancel_btn.configure(state='normal')
+            self.rest_btn.configure(state='normal')
+            self.status_lbl.configure(text=self.STATUS_WORKING,
+                                      bg=self.COLOR_WORKING)
+            self.left_time_lbl.configure(bg=self.COLOR_WORKING)
+        elif status == self.STATUS_PAUSED:
+            self.start_btn.configure(text=self.LBL_CONTINUE)
+            self.status_lbl.configure(text=self.STATUS_PAUSED,
+                                      bg=self.COLOR_PAUSED)
+            self.left_time_lbl.configure(bg=self.COLOR_PAUSED)
+        elif status == self.STATUS_RESTING:
+            self.start_btn.configure(text=self.LBL_PAUSE)
+            self.rest_btn.configure(state='disabled')
+            self.status_lbl.configure(text=self.STATUS_RESTING,
+                                      bg=self.COLOR_RESTING)
+            self.left_time_lbl.configure(bg=self.COLOR_RESTING)
+        else:
+            pass
 
-    # command of Start button
+    # command of Start/Pause/Continue button
     def start_cmd(self):
-        # get verified input
-        self.pomodoro_time = self.get_int(
+        # start from Idle
+        if self.status == self.STATUS_IDLE:
+            # get verified input
+            self.pomodoro_time = self.get_int(
                                     self.pomodoro_time_value.get()) * 60
-        self.rest_time = self.get_int(self.rest_time_value.get()) * 60
+            self.rest_time = self.get_int(
+                                        self.rest_time_value.get()) * 60
 
-        if self.pomodoro_time > 0:
-            if self.rest_time > 0:
-                # update status of buttons and label
-                self.start_btn.configure(state='disabled')
-                self.pause_btn.configure(state='normal')
-                self.stop_btn.configure(state='normal')
-                self.status_lbl.configure(text='Working', bg='green')
-                self.left_time_lbl.configure(bg='green')
-                # reset status indicator
-                self.status = 'W'
+            if self.pomodoro_time > 0:
+                if self.rest_time > 0:
+                    # reset status and indicator
+                    self.status = self.STATUS_WORKING
+                    self.paused = False
+                    self.left_time = self.pomodoro_time
+                    self.update_widgets(self.status)
+                    # start count down for Pomodoro
+                    self.update()
+                else:
+                    self.invalid_input_msg_of('Rest Time')
+            else:
+                self.invalid_input_msg_of('Pomodoro')
+        # pause/continue for working or resting
+        elif (self.status == self.STATUS_WORKING
+           or self.status == self.STATUS_RESTING):
+            # pause
+            if not self.paused:
+                # switch pause indicator
+                self.paused = True
+                # change widgets' state, but don't change status
+                self.update_widgets(self.STATUS_PAUSED)
+                # pause count down
+                self.left_time_lbl.after_cancel(self.after_id)
+            # continue
+            else:
+                # switch pause indicator
                 self.paused = False
-                self.left_time = self.pomodoro_time
-                # start count down for Pomodoro
+                self.update_widgets(self.status)
+                # continue count down
                 self.update()
-            else:
-                self.invalid_input_msg_of('Rest Time')
+        # to be extended
         else:
-            self.invalid_input_msg_of('Pomodoro')
+            pass
 
-    # command of Pause button
-    def pause_cmd(self):
-        # continue
-        if self.paused:
-            # switch pause indicator
-            self.paused = False
-            self.pause_btn.configure(text='Pause')
-            if self.status == 'W':
-                self.status_lbl.configure(text='Working', bg='green')
-                self.left_time_lbl.configure(bg='green')
-            elif self.status == 'R':
-                self.status_lbl.configure(text='Resting', bg='#86ceff')
-                self.left_time_lbl.configure(bg='#86ceff')
-            else:
-                pass
-            # continue count down
-            self.update()
-        # pause
-        else:
-            # switch pause indicator
-            self.paused = True
-            self.pause_btn.configure(text='Continue')
-            self.status_lbl.configure(text='Paused', bg='yellow')
-            self.left_time_lbl.configure(bg='yellow')
-            # pause count down
-            self.left_time_lbl.after_cancel(self.cancel_id)
-
-    # command of Stop button
-    def stop_cmd(self):
-        # reset pause indicator
-        self.paused = False
-        self.start_btn.configure(state='normal')
-        self.pause_btn.configure(text='Pause', state='disabled')
-        self.stop_btn.configure(state='disabled')
-        self.status_lbl.configure(text='Idle', bg='red')
-        self.left_time_lbl.configure(bg='red')
-        # set manual stop status
-        self.status = 'C'
+    # command of Cancel button
+    def cancel_cmd(self):
+        # update status indicator
+        self.status = self.STATUS_CANCELLED
         # terminal count down
         self.left_time = 0
-        self.update()
+        if self.paused:
+            self.paused = False
+            self.update()
+
+    # command of Rest button
+    def rest_cmd(self):
+        if self.status == self.STATUS_WORKING:
+            self.pomodoro_time -= (self.left_time + 1)
+            self.left_time = 0
+            if self.paused:
+                self.paused = False
+                self.update()
+        else:
+            pass
 
     # count down
     def update(self):
@@ -158,33 +180,30 @@ class PyPomodoro(Frame):
             # Pomodoro or Rest not finished
             if self.left_time > 0:
                 self.left_time -= 1
-                self.cancel_id = self.left_time_lbl.after(1000, 
+                self.after_id = self.left_time_lbl.after(1000,
                                                           self.update)
             # Pomodoro finished
-            elif self.status == 'W':
+            elif self.status == self.STATUS_WORKING:
                 showinfo('Information', 'You have worked for {0}, '
                          'have a break now.'.format(
                          self.time_format(self.pomodoro_time)))
                 # reset Left Time to Rest Time
                 self.left_time = self.rest_time
                 # update status and label
-                self.status = 'R'
-                self.status_lbl.configure(text='Resting', bg='#86ceff')
-                self.left_time_lbl.configure(bg='#86ceff')
+                self.status = self.STATUS_RESTING
+                self.update_widgets(self.status)
                 # continue count down for Rest
                 self.update()
             # Rest finished
-            elif self.status == 'R':
+            elif self.status == self.STATUS_RESTING:
                 showinfo('Information', 'You have finished a Pomodoro '
                          'cycle. You can go ahead to the next one.')
-                self.start_btn.configure(state='normal')
-                self.pause_btn.configure(text='Pause', state='disabled')
-                self.stop_btn.configure(state='disabled')
-                self.status_lbl.configure(text='Idle', bg='red')
-                self.left_time_lbl.configure(bg='red')
+                self.status = self.STATUS_IDLE
+                self.update_widgets(self.status)
             # manual stopped
             else:
-                pass
+                self.status = self.STATUS_IDLE
+                self.update_widgets(self.status)
         # paused
         else:
             pass
@@ -203,8 +222,8 @@ class PyPomodoro(Frame):
 
     # display message for invalid input
     def invalid_input_msg_of(self, var_name):
-        showerror('Invalid Input', 
-             'Invalid input. "{0}" must be Integer and greater than 0.'.format(var_name))
+        showerror('Invalid Input', 'Invalid input. '
+           '"{0}" must be Integer and greater than 0.'.format(var_name))
 
     # convert the second count into HH:MM:SS format
     def time_format(self, time_in_sec):
@@ -212,18 +231,48 @@ class PyPomodoro(Frame):
         time_sec = time_in_sec % 60
         if time_hrs:
             time_min = (time_in_sec - time_hrs * 3600) // 60
-            return '{0}:{1:0>2}:{2:0>2}'.format(time_hrs ,
+            return '{0}:{1:0>2}:{2:0>2}'.format(time_hrs,
                                                 time_min, time_sec)
         else:
             time_min = time_in_sec // 60
             return '{0:0>2}:{1:0>2}'.format(time_min, time_sec)
 
-
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
         self.grid(row=0, column=0)
+
+        self.LBL_START = 'Start'
+        self.LBL_PAUSE = 'Pause'
+        self.LBL_CONTINUE = 'Continue'
+        self.LBL_CANCEL = 'Cancel'
+        self.LBL_REST = 'Rest Now'
+
+        self.COLOR_IDLE = 'red'
+        self.COLOR_WORKING = 'green'
+        #self.COLOR_WORKING_PAUSED = 'yellow'
+        self.COLOR_RESTING = '#86ceff'
+        #self.COLOR_RESTING_PAUSED = 'orange'
+        self.COLOR_PAUSED = 'yellow'
+
+        self.STATUS_IDLE = 'Idle'
+        self.STATUS_WORKING = 'Working'
+        #self.STATUS_WORKING_PAUSED = 'Paused'
+        self.STATUS_RESTING = 'Resting'
+        #self.STATUS_RESTING_PAUSED = 'Paused'
+        self.STATUS_PAUSED = 'Paused'
+        self.STATUS_CANCELLED = 'Cancelled'
+
         self.create_widgets()
+
+        self.pomodoro_time = 0
+        self.rest_time = 0
+        self.left_time = 0
+        self.paused = False              # indicator of pause status
+        self.after_id = 0                # used when canceling .after
+        self.status = self.STATUS_IDLE   # indicator of status
+
+        self.update_widgets(self.status)
 
 
 app = Tk()
