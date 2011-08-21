@@ -11,7 +11,7 @@ date:    2011-08-20
 '''
 
 from tkinter import Tk, Entry, Label, Button, Frame, IntVar, StringVar
-from tkinter.messagebox import showinfo, showerror
+from tkinter.messagebox import showinfo, showerror, askokcancel
 
 
 class PyPomodoro(Frame):
@@ -153,24 +153,30 @@ class PyPomodoro(Frame):
 
     # command of Cancel button
     def cancel_cmd(self):
-        # update status indicator
-        self.status = self.STATUS_CANCELLED
-        # terminal count down
-        self.left_time = 0
-        if self.paused:
-            self.paused = False
-            self.update()
-
-    # command of Rest button
-    def rest_cmd(self):
-        if self.status == self.STATUS_WORKING:
-            self.pomodoro_time -= (self.left_time + 1)
+        self.left_time_lbl.after_cancel(self.after_id)
+        if askokcancel('Question', 'Do you really want to cancel '
+                    'the whole Pomodoro cycle now?'):
+            # update status indicator
+            self.status = self.STATUS_CANCELLED
+            # terminal count down
             self.left_time = 0
             if self.paused:
                 self.paused = False
-                self.update()
+        self.update()
+
+    # command of Rest button
+    def rest_cmd(self):
+        self.left_time_lbl.after_cancel(self.after_id)
+        if self.status == self.STATUS_WORKING:
+            if askokcancel('Question', 'Do you really want to terminal '
+                        'the Pomodoro and have a Rest Now?'):
+                self.pomodoro_time -= (self.left_time + 1)
+                self.left_time = 0
+                if self.paused:
+                    self.paused = False
         else:
             pass
+        self.update()
 
     # count down
     def update(self):
