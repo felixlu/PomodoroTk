@@ -1,9 +1,9 @@
 Features to be impletmented:
 
+ * Continue Working after Pomodoro exceed.
+ * Directly go to next Pomodoro cycle after Resting.
+ * Add cycle count feature.
  * Get system wide focus when messagebox shows.
-
  * Add sound and icon.
-
  * Task Log.
-
  * Application activity records.
