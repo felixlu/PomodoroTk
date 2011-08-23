@@ -44,33 +44,44 @@ class PyPomodoro(Frame):
         self.rest_time_min_lbl = Label(self.parent, text='minutes')
         self.rest_time_min_lbl.grid(row=1, column=2, sticky='W')
 
+        # create Cycle label and input field
+        self.cycle_lbl = Label(self.parent, text='Cycle:')
+        self.cycle_lbl.grid(row=2, column=0, sticky='E')
+
+        self.cycle_value = StringVar()
+        self.cycle_entry = Entry(self.parent, 
+                                 textvariable=self.cycle_value, 
+                                 justify='right', width=11)
+        self.cycle_entry.grid(row=2, column=1)
+
         # create buttons
         self.start_btn = Button(self.parent,
                                 command=self.start_cmd, width=8)
-        self.start_btn.grid(row=2, column=2)
+        self.start_btn.grid(row=3, column=2)
 
         self.cancel_btn = Button(self.parent,
                                 command=self.cancel_cmd, width=8)
-        self.cancel_btn.grid(row=2, column=0)
+        self.cancel_btn.grid(row=3, column=0)
 
         self.rest_btn = Button(self.parent,
                                command=self.rest_cmd, width=8)
-        self.rest_btn.grid(row=2, column=1)
+        self.rest_btn.grid(row=3, column=1)
 
         # create label to display the Left Time
         self.status_lbl = Label(self.parent, font=('times', 12, 'bold'))
-        self.status_lbl.grid(row=3, column=0, sticky='EWNS')
+        self.status_lbl.grid(row=4, column=0, sticky='EWNS')
 
         self.left_time_value = IntVar()
         self.left_time_lbl = Label(self.parent,
                                    font=('times', 20, 'bold'),
                                    textvariable=self.left_time_value)
-        self.left_time_lbl.grid(row=3, column=1, columnspan=2,
+        self.left_time_lbl.grid(row=4, column=1, columnspan=2,
                                 sticky='EWNS')
 
         # data initialize
         self.pomodoro_time_value.set(25)
         self.rest_time_value.set(5)
+        self.cycle_value.set(4)
         self.left_time_value.set('00:00')
 
     # update widgets' status
@@ -110,11 +121,13 @@ class PyPomodoro(Frame):
     def start_cmd(self):
         # start from Idle
         if self.status == self.STATUS_IDLE:
-            # get verified input
-            self.pomodoro_time = self.get_int(
+            if not self.continue_cycle:
+                # get verified input
+                self.pomodoro_time = self.get_int(
                                     self.pomodoro_time_value.get()) * 60
-            self.rest_time = self.get_int(
+                self.rest_time = self.get_int(
                                         self.rest_time_value.get()) * 60
+                self.cycle_count = self.get_int(self.cycle_value.get())
 
             if self.pomodoro_time > 0:
                 if self.rest_time > 0:
@@ -129,6 +142,7 @@ class PyPomodoro(Frame):
                     self.invalid_input_msg_of('Rest Time')
             else:
                 self.invalid_input_msg_of('Pomodoro')
+
         # pause/continue for working or resting
         elif (self.status == self.STATUS_WORKING
            or self.status == self.STATUS_RESTING):
@@ -147,6 +161,7 @@ class PyPomodoro(Frame):
                 self.update_widgets(self.status)
                 # continue count down
                 self.update()
+
         # to be extended
         else:
             pass
@@ -202,10 +217,18 @@ class PyPomodoro(Frame):
                 self.update()
             # Rest finished
             elif self.status == self.STATUS_RESTING:
-                showinfo('Information', 'You have finished a Pomodoro '
-                         'cycle. You can go ahead to the next one.')
                 self.status = self.STATUS_IDLE
-                self.update_widgets(self.status)
+                if (self.cycle_count > 1 
+                   and askokcancel('Question', 'You have finished a '
+                          'Pomodoro cycle. Do you want to continue?')):
+                    self.cycle_count -= 1
+                    self.continue_cycle = True
+                    self.start_cmd()
+                else:
+                    showinfo('Information', 'You have finished all'
+                             'Pomodoro cycles. Have a long break now.')
+                    self.continue_cycle = False
+                    self.update_widgets(self.status)
             # manual stopped
             else:
                 self.status = self.STATUS_IDLE
@@ -271,12 +294,15 @@ class PyPomodoro(Frame):
 
         self.create_widgets()
 
+        # data initialize
         self.pomodoro_time = 0
         self.rest_time = 0
         self.left_time = 0
         self.paused = False              # indicator of pause status
         self.after_id = 0                # used when canceling .after
         self.status = self.STATUS_IDLE   # indicator of status
+        self.cycle_count = 0
+        self.continue_cycle = False
 
         self.update_widgets(self.status)
 
