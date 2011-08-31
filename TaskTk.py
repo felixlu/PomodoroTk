@@ -179,11 +179,14 @@ def edit_task_cmd():
 
 def delete_task_cmd():
     tid = get_selected_task_id()
+    global editing_task_id
     if tid != None:
         if askokcancel('Confirmation', 'Are you sure to '
                        'delete the selected Task?'):
             delete_task(tid)
             refresh_task_list()
+            if editing_task_id > 0:
+                editing_task_id = -1
 
 
 #def create_widgets():
@@ -191,11 +194,12 @@ def delete_task_cmd():
 
 
 if __name__ == '__main__':
-    conn = sqlite3.connect('pytask.db')
+    conn = sqlite3.connect('task.db')
     conn.isolation_level = None
     cur = conn.cursor()
 
     app = Tk()
+    app.title('TaskTk')
 #    create_widgets()
 
     task_title_lbl = Label(app, text='Title:')
