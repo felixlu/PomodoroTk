@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-PyPomodoro is a simple timer based on The Pomodoro Technique
+PomodoroTk is a simple timer based on The Pomodoro Technique
 ( www.pomodorotechnique.com ), written in Python 3 and Tkinter.
 author:  Felix Lu
 email:   lugh82@gmail.com
@@ -14,7 +14,7 @@ from tkinter import Tk, Entry, Label, Button, Frame, IntVar, StringVar
 from tkinter.messagebox import showinfo, showerror, askokcancel
 
 
-class PyPomodoro(Frame):
+class PomodoroTk(Frame):
 
     # create widgets
     def create_widgets(self):
@@ -225,7 +225,7 @@ class PyPomodoro(Frame):
                     self.continue_cycle = True
                     self.start_cmd()
                 else:
-                    showinfo('Information', 'You have finished all'
+                    showinfo('Information', 'You have finished all '
                              'Pomodoro cycles. Have a long break now.')
                     self.continue_cycle = False
                     self.update_widgets(self.status)
@@ -308,6 +308,6 @@ class PyPomodoro(Frame):
 
 
 app = Tk()
-app.title('PyPomodoro')
-window = PyPomodoro(app)
+app.title('PomodoroTk')
+window = PomodoroTk(app)
 app.mainloop()
