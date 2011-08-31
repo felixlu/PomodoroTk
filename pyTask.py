@@ -4,6 +4,7 @@
 import sqlite3
 from tkinter import *
 from multilistbox import MultiListbox
+from tkinter.messagebox import *
 
 
 def init_db():
@@ -17,7 +18,8 @@ def init_db():
             pomodoro_count integer,
             pomodoro_ids   text,
             estimated_mins integer,
-            spent_time     integer
+            spent_time     integer,
+            status         integer
         );
     """)
     cur.execute("""
@@ -34,14 +36,20 @@ def init_db():
 
 
 def get_task():
-    title = input('Task Title: ')
-    task = input('Task: ')
-    return (title, task)
+    task_title = task_title_value.get()
+    task_text = task_value.get()
+    if task_title and task_text:
+        task_title_value.set('')
+        task_value.set('')
+        return (task_title, task_text)
+    else:
+        return None
 
 
 def get_id(action):
     while True:
-        line = input('Please enter Task ID to {0}: '.format(action))
+        line = input(
+                'Please enter Task ID to {0}: '.format(action))
         if line:
             try:
                 tid = int(line)
@@ -110,18 +118,19 @@ def show_tasks(task_id):
         print()
 
 
-def confirm_action(action, task_id):
-    show_tasks(task_id)
-    confirm = input('Do you want to {0} the above task? (y/N) '.format(action))
-    if confirm in ('Y', 'y', 'Yes', 'YES', 'yes'):
-        return True
-    else:
-        return False
+def get_task_by_id(task_id):
+    query = """
+        SELECT id, title, task FROM Task
+        WHERE id='{0}';""".format(task_id)
+    cur.execute(query)
+    row = cur.fetchone()
+    return (row[1], row[2])
 
 
 def refresh_task_list():
     list_size = task_list.size()
     if list_size > 0:
+        del(number_to_id[:])
         task_list.delete(0, list_size-1)
     query = """SELECT id, title, task FROM Task;"""
     cur.execute(query)
@@ -131,27 +140,50 @@ def refresh_task_list():
 #    task_list.insert(columns)
     i = 0
     for row in rows:
+        number_to_id.append(row[0])
         i += 1
         task_list.insert(END, (i, row[1], row[2]))
 
 
-def save_task_cmd():
-    task_title = task_title_value.get()
-    task_text = task_value.get()
-    if task_title and task_text:
-        task = (task_title, task_text)
-        insert_task(task)
-        refresh_task_list()
+def get_selected_task_id():
+    if len(task_list.curselection()) > 0:
+        list_no = int(task_list.curselection()[0])
+        return number_to_id[list_no]
     else:
-        pass
+        return None
+
+
+def save_task_cmd():
+    task = get_task()
+    global editing_task_id
+    if task:
+        if editing_task_id == -1:
+            insert_task(task)
+            refresh_task_list()
+        elif editing_task_id >= 0:
+            task = (editing_task_id, ) + task
+            update_task(task)
+            refresh_task_list()
+            editing_task_id = -1
 
 
 def edit_task_cmd():
-    pass
+    tid = get_selected_task_id()
+    global editing_task_id
+    if tid != None:
+        task = get_task_by_id(tid)
+        task_title_value.set(task[0])
+        task_value.set(task[1])
+        editing_task_id = tid
 
 
 def delete_task_cmd():
-    pass
+    tid = get_selected_task_id()
+    if tid != None:
+        if askokcancel('Confirmation', 'Are you sure to '
+                       'delete the selected Task?'):
+            delete_task(tid)
+            refresh_task_list()
 
 
 #def create_widgets():
@@ -173,7 +205,8 @@ if __name__ == '__main__':
     task_title_entry = Entry(app, textvariable=task_title_value)
     task_title_entry.grid(row=0, column=1)
 
-    save_task_btn = Button(app, text='Save', command=save_task_cmd)
+    save_task_btn = Button(app, 
+                           text='Save', command=save_task_cmd)
     save_task_btn.grid(row=0, column=2)
 
     task_lbl = Label(app, text='Task:')
@@ -183,41 +216,21 @@ if __name__ == '__main__':
     task_entry = Entry(app, textvariable=task_value)
     task_entry.grid(row=1, column=1)
 
-    edit_task_btn = Button(app, text='Edit', command=edit_task_cmd)
+    edit_task_btn = Button(app, 
+                           text='Edit', command=edit_task_cmd)
     edit_task_btn.grid(row=1, column=2)
 
-    delete_task_btn = Button(app, text='Delete', command=delete_task_cmd)
+    delete_task_btn = Button(app, 
+                         text='Delete', command=delete_task_cmd)
     delete_task_btn.grid(row=2, column=2)
 
-    task_list = MultiListbox(app, (('No.', 5), ('Title', 15), ('Task', 30)))
+    task_list = MultiListbox(app, 
+                      (('No.', 5), ('Title', 15), ('Task', 30)))
     task_list.grid(row=3, column=0, columnspan=3)
 
-    CLI = False
-    while CLI:
-        line = input('Action? (I)nitDB/(A)dd/(E)dit/(D)elete'
-                     '/(S)how/Enter(Exit): ')
-        if line == 'I' or line == 'i':
-            init_db()
-        elif line == 'A' or line == 'a':
-            task = get_task()
-            insert_task(task)
-        elif line == 'E' or line == 'e':
-            tid = get_id('update')
-            if confirm_action('update', tid):
-                task = (tid, ) + get_task()
-                update_task(task)
-        elif line == 'D' or line == 'd':
-            tid = get_id('delete')
-            if confirm_action('delete', tid):
-                delete_task(tid)
-        elif line == 'S' or line == 's':
-            tid = get_id('show')
-            show_tasks(tid)
-        elif not line:
-            break
-
-        conn.close()
-
+    number_to_id = []
+    list_no = 0
+    editing_task_id = -1
     refresh_task_list()
 
     app.mainloop()
