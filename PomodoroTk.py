@@ -68,24 +68,25 @@ class PomodoroTk(Frame):
         self.rest_btn.grid(row=3, column=1)
 
         # create label to display the Left Time
-        self.status_lbl = Label(self.parent, font=('times', 12, 'bold'))
-        self.status_lbl.grid(row=4, column=0, sticky='EWNS')
+        #self.status_lbl = Label(self.parent, font=('times', 12, 'bold'))
+        #self.status_lbl.grid(row=4, column=0, sticky='EWNS')
 
-        self.left_time_value = IntVar()
+        self.left_time_value = StringVar()
         self.left_time_lbl = Label(self.parent,
-                                   font=('times', 20, 'bold'),
+                                   font=('monospace', 20, 'bold'),
                                    textvariable=self.left_time_value)
-        self.left_time_lbl.grid(row=4, column=1, columnspan=2,
+        self.left_time_lbl.grid(row=4, column=0, columnspan=3,
                                 sticky='EWNS')
 
         # data initialize
         self.pomodoro_time_value.set(25)
         self.rest_time_value.set(5)
         self.cycle_value.set(4)
-        self.left_time_value.set('00:00')
+        self.left_time_value.set('{0:<12}{1:>10}'.format(self.STATUS_IDLE, '00:00'))
 
     # update widgets' status
     def update_widgets(self, status):
+        self.left_time_value.set('{0:<12}{1:>10}'.format(status, self.time_format(self.left_time)))
         if status == self.STATUS_IDLE:
             self.start_btn.configure(text=self.LBL_START,
                                      state='normal')
@@ -93,26 +94,26 @@ class PomodoroTk(Frame):
                                       state='disabled')
             self.rest_btn.configure(text=self.LBL_REST,
                                     state='disabled')
-            self.status_lbl.configure(text=self.STATUS_IDLE,
-                                      bg=self.COLOR_IDLE)
+            #self.status_lbl.configure(text=self.STATUS_IDLE,
+            #                          bg=self.COLOR_IDLE)
             self.left_time_lbl.configure(bg=self.COLOR_IDLE)
         elif status == self.STATUS_WORKING:
             self.start_btn.configure(text=self.LBL_PAUSE)
             self.cancel_btn.configure(state='normal')
             self.rest_btn.configure(state='normal')
-            self.status_lbl.configure(text=self.STATUS_WORKING,
-                                      bg=self.COLOR_WORKING)
+            #self.status_lbl.configure(text=self.STATUS_WORKING,
+            #                          bg=self.COLOR_WORKING)
             self.left_time_lbl.configure(bg=self.COLOR_WORKING)
         elif status == self.STATUS_PAUSED:
             self.start_btn.configure(text=self.LBL_CONTINUE)
-            self.status_lbl.configure(text=self.STATUS_PAUSED,
-                                      bg=self.COLOR_PAUSED)
+            #self.status_lbl.configure(text=self.STATUS_PAUSED,
+            #                          bg=self.COLOR_PAUSED)
             self.left_time_lbl.configure(bg=self.COLOR_PAUSED)
         elif status == self.STATUS_RESTING:
             self.start_btn.configure(text=self.LBL_PAUSE)
             self.rest_btn.configure(state='disabled')
-            self.status_lbl.configure(text=self.STATUS_RESTING,
-                                      bg=self.COLOR_RESTING)
+            #self.status_lbl.configure(text=self.STATUS_RESTING,
+            #                          bg=self.COLOR_RESTING)
             self.left_time_lbl.configure(bg=self.COLOR_RESTING)
         else:
             pass
@@ -197,7 +198,7 @@ class PomodoroTk(Frame):
     def update(self):
         if not self.paused:
             # update Left Time label
-            self.left_time_value.set(self.time_format(self.left_time))
+            self.left_time_value.set('{0:<12}{1:>10}'.format(self.status, self.time_format(self.left_time)))
             # Pomodoro or Rest not finished
             if self.left_time > 0:
                 self.left_time -= 1
