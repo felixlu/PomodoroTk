@@ -10,7 +10,7 @@ version: 0.2
 date:    2011-08-20
 '''
 
-from tkinter import Tk, Entry, Label, Button, Frame, IntVar, StringVar
+from tkinter import Tk, Entry, Label, Button, Frame, StringVar
 from tkinter.messagebox import showinfo, showerror, askokcancel
 
 
@@ -24,24 +24,28 @@ class PomodoroTk(Frame):
 
         self.pomodoro_time_value = StringVar()
         self.pomodoro_time_entry = Entry(self.parent,
-                                 textvariable=self.pomodoro_time_value,
-                                 justify='right', width=11)
+                          textvariable=self.pomodoro_time_value,
+                          justify='right', width=11)
         self.pomodoro_time_entry.grid(row=0, column=1)
 
-        self.pomodoro_min_lbl = Label(self.parent, text='minutes')
-        self.pomodoro_min_lbl.grid(row=0, column=2, sticky='W')
+        self.pomodoro_min_lbl = Label(self.parent, 
+                                      text='minutes')
+        self.pomodoro_min_lbl.grid(row=0, column=2, 
+                                   sticky='W')
 
         # create Rest Time label and input field
-        self.rest_time_lbl = Label(self.parent, text='Rest Time:')
+        self.rest_time_lbl = Label(self.parent, 
+                                   text='Rest Time:')
         self.rest_time_lbl.grid(row=1, column=0, sticky='E')
 
         self.rest_time_value = StringVar()
         self.rest_time_entry = Entry(self.parent,
-                                     textvariable=self.rest_time_value,
-                                     justify='right', width=11)
+                              textvariable=self.rest_time_value,
+                              justify='right', width=11)
         self.rest_time_entry.grid(row=1, column=1)
 
-        self.rest_time_min_lbl = Label(self.parent, text='minutes')
+        self.rest_time_min_lbl = Label(self.parent, 
+                                       text='minutes')
         self.rest_time_min_lbl.grid(row=1, column=2, sticky='W')
 
         # create Cycle label and input field
@@ -60,7 +64,7 @@ class PomodoroTk(Frame):
         self.start_btn.grid(row=3, column=2)
 
         self.cancel_btn = Button(self.parent,
-                                command=self.cancel_cmd, width=8)
+                               command=self.cancel_cmd, width=8)
         self.cancel_btn.grid(row=3, column=0)
 
         self.rest_btn = Button(self.parent,
@@ -68,13 +72,14 @@ class PomodoroTk(Frame):
         self.rest_btn.grid(row=3, column=1)
 
         # create label to display the Left Time
-        #self.status_lbl = Label(self.parent, font=('times', 12, 'bold'))
+        #self.status_lbl = Label(self.parent, 
+        #                        font=('times', 12, 'bold'))
         #self.status_lbl.grid(row=4, column=0, sticky='EWNS')
 
         self.left_time_value = StringVar()
         self.left_time_lbl = Label(self.parent,
-                                   font=('monospace', 20, 'bold'),
-                                   textvariable=self.left_time_value)
+                              font=('monospace', 12, 'bold'),
+                              textvariable=self.left_time_value)
         self.left_time_lbl.grid(row=4, column=0, columnspan=3,
                                 sticky='EWNS')
 
@@ -82,11 +87,13 @@ class PomodoroTk(Frame):
         self.pomodoro_time_value.set(25)
         self.rest_time_value.set(5)
         self.cycle_value.set(4)
-        self.left_time_value.set('{0:<12}{1:>10}'.format(self.STATUS_IDLE, '00:00'))
+        self.left_time_value.set('{0:<10}{1:>8}'.format(
+                                     self.STATUS_IDLE, '00:00'))
 
     # update widgets' status
     def update_widgets(self, status):
-        self.left_time_value.set('{0:<12}{1:>10}'.format(status, self.time_format(self.left_time)))
+        self.left_time_value.set('{0:<10}{1:>8}'.format(status, 
+                              self.time_format(self.left_time)))
         if status == self.STATUS_IDLE:
             self.start_btn.configure(text=self.LBL_START,
                                      state='normal')
@@ -125,10 +132,11 @@ class PomodoroTk(Frame):
             if not self.continue_cycle:
                 # get verified input
                 self.pomodoro_time = self.get_int(
-                                    self.pomodoro_time_value.get()) * 60
+                            self.pomodoro_time_value.get()) * 60
                 self.rest_time = self.get_int(
-                                        self.rest_time_value.get()) * 60
-                self.cycle_count = self.get_int(self.cycle_value.get())
+                                self.rest_time_value.get()) * 60
+                self.cycle_count = self.get_int(
+                                         self.cycle_value.get())
 
             if self.pomodoro_time > 0:
                 if self.rest_time > 0:
@@ -170,8 +178,8 @@ class PomodoroTk(Frame):
     # command of Cancel button
     def cancel_cmd(self):
         self.left_time_lbl.after_cancel(self.after_id)
-        if askokcancel('Question', 'Do you really want to cancel '
-                    'the whole Pomodoro cycle now?'):
+        if askokcancel('Question', 'Do you really want to '
+                    'cancel the whole Pomodoro cycle now?'):
             # update status indicator
             self.status = self.STATUS_CANCELLED
             # terminal count down
@@ -184,8 +192,8 @@ class PomodoroTk(Frame):
     def rest_cmd(self):
         self.left_time_lbl.after_cancel(self.after_id)
         if self.status == self.STATUS_WORKING:
-            if askokcancel('Question', 'Do you really want to terminal '
-                        'the Pomodoro and have a Rest Now?'):
+            if askokcancel('Question', 'Do you really want to '
+                  'terminal the Pomodoro and have a Rest Now?'):
                 self.pomodoro_time -= (self.left_time + 1)
                 self.left_time = 0
                 if self.paused:
@@ -198,16 +206,17 @@ class PomodoroTk(Frame):
     def update(self):
         if not self.paused:
             # update Left Time label
-            self.left_time_value.set('{0:<12}{1:>10}'.format(self.status, self.time_format(self.left_time)))
+            self.left_time_value.set('{0:<10}{1:>8}'.format(
+                 self.status, self.time_format(self.left_time)))
             # Pomodoro or Rest not finished
             if self.left_time > 0:
                 self.left_time -= 1
                 self.after_id = self.left_time_lbl.after(1000,
-                                                          self.update)
+                                                    self.update)
             # Pomodoro finished
             elif self.status == self.STATUS_WORKING:
-                showinfo('Information', 'You have worked for {0}, '
-                         'have a break now.'.format(
+                showinfo('Information', 'You have worked for '
+                         '{0}, have a break now.'.format(
                          self.time_format(self.pomodoro_time)))
                 # reset Left Time to Rest Time
                 self.left_time = self.rest_time
@@ -220,14 +229,16 @@ class PomodoroTk(Frame):
             elif self.status == self.STATUS_RESTING:
                 self.status = self.STATUS_IDLE
                 if (self.cycle_count > 1 
-                   and askokcancel('Question', 'You have finished a '
-                          'Pomodoro cycle. Do you want to continue?')):
+                   and askokcancel('Question', 
+                          'You have finished a Pomodoro cycle. '
+                          'Do you want to continue?')):
                     self.cycle_count -= 1
                     self.continue_cycle = True
                     self.start_cmd()
                 else:
-                    showinfo('Information', 'You have finished all '
-                             'Pomodoro cycles. Have a long break now.')
+                    showinfo('Information', 
+                       'You have finished all Pomodoro cycles. '
+                       'Have a long break now.')
                     self.continue_cycle = False
                     self.update_widgets(self.status)
             # manual stopped
@@ -252,8 +263,8 @@ class PomodoroTk(Frame):
 
     # display message for invalid input
     def invalid_input_msg_of(self, var_name):
-        showerror('Invalid Input', 'Invalid input. '
-           '"{0}" must be Integer and greater than 0.'.format(var_name))
+        showerror('Invalid Input', 'Invalid input. "{0}" must '
+              'be Integer and greater than 0.'.format(var_name))
 
     # convert the second count into HH:MM:SS format
     def time_format(self, time_in_sec):
@@ -262,7 +273,7 @@ class PomodoroTk(Frame):
         if time_hrs:
             time_min = (time_in_sec - time_hrs * 3600) // 60
             return '{0}:{1:0>2}:{2:0>2}'.format(time_hrs,
-                                                time_min, time_sec)
+                                             time_min, time_sec)
         else:
             time_min = time_in_sec // 60
             return '{0:0>2}:{1:0>2}'.format(time_min, time_sec)
@@ -299,9 +310,9 @@ class PomodoroTk(Frame):
         self.pomodoro_time = 0
         self.rest_time = 0
         self.left_time = 0
-        self.paused = False              # indicator of pause status
-        self.after_id = 0                # used when canceling .after
-        self.status = self.STATUS_IDLE   # indicator of status
+        self.paused = False             # pause status indicator
+        self.after_id = 0               # for canceling .after
+        self.status = self.STATUS_IDLE  # indicator of status
         self.cycle_count = 0
         self.continue_cycle = False
 
