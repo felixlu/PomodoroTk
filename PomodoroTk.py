@@ -227,12 +227,12 @@ class PomodoroTk(Frame):
                 self.update()
             # Rest finished
             elif self.status == self.STATUS_RESTING:
+                self.cycle_count -= 1
                 self.status = self.STATUS_IDLE
-                if (self.cycle_count > 1 
+                if (self.cycle_count > 0 
                    and askokcancel('Question', 
                           'You have finished a Pomodoro cycle. '
                           'Do you want to continue?')):
-                    self.cycle_count -= 1
                     self.continue_cycle = True
                     self.start_cmd()
                 else:
