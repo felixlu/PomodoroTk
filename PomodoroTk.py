@@ -26,29 +26,23 @@ class PomodoroTk(Frame):
         self.pomodoro_lbl.grid(row=0, column=0, sticky='E')
 
         self.pomodoro_time_value = StringVar()
-        self.pomodoro_time_entry = Entry(self.parent,
-                          textvariable=self.pomodoro_time_value,
-                          justify='right', width=11)
+        self.pomodoro_time_entry = Entry(self.parent, justify='right',
+                                         textvariable=self.pomodoro_time_value)
         self.pomodoro_time_entry.grid(row=0, column=1)
 
-        self.pomodoro_min_lbl = Label(self.parent, 
-                                      text='minutes')
-        self.pomodoro_min_lbl.grid(row=0, column=2, 
-                                   sticky='W')
+        self.pomodoro_min_lbl = Label(self.parent, text='minutes')
+        self.pomodoro_min_lbl.grid(row=0, column=2, sticky='W')
 
         # create Rest Time label and input field
-        self.rest_time_lbl = Label(self.parent, 
-                                   text='Rest Time:')
+        self.rest_time_lbl = Label(self.parent, text='Rest Time:')
         self.rest_time_lbl.grid(row=1, column=0, sticky='E')
 
         self.rest_time_value = StringVar()
-        self.rest_time_entry = Entry(self.parent,
-                              textvariable=self.rest_time_value,
-                              justify='right', width=11)
+        self.rest_time_entry = Entry(self.parent, justify='right',
+                                     textvariable=self.rest_time_value)
         self.rest_time_entry.grid(row=1, column=1)
 
-        self.rest_time_min_lbl = Label(self.parent, 
-                                       text='minutes')
+        self.rest_time_min_lbl = Label(self.parent,text='minutes')
         self.rest_time_min_lbl.grid(row=1, column=2, sticky='W')
 
         # create Cycle label and input field
@@ -56,35 +50,32 @@ class PomodoroTk(Frame):
         self.cycle_lbl.grid(row=2, column=0, sticky='E')
 
         self.cycle_value = StringVar()
-        self.cycle_entry = Entry(self.parent, 
-                                 textvariable=self.cycle_value, 
-                                 justify='right', width=11)
+        self.cycle_entry = Entry(self.parent, justify='right', 
+                                 textvariable=self.cycle_value)
         self.cycle_entry.grid(row=2, column=1)
 
         # create buttons
-        self.start_btn = Button(self.parent,
-                                command=self.start_cmd, width=8)
-        self.start_btn.grid(row=3, column=2)
+        self.start_btn = Button(self.parent, command=self.start_cmd)
+        self.start_btn.grid(row=2, column=2)
 
-        self.cancel_btn = Button(self.parent,
-                               command=self.cancel_cmd, width=8)
-        self.cancel_btn.grid(row=3, column=0)
-
-        self.rest_btn = Button(self.parent,
-                               command=self.rest_cmd, width=8)
-        self.rest_btn.grid(row=3, column=1)
-
-        # create label to display the Left Time
-        #self.status_lbl = Label(self.parent, 
-        #                        font=('times', 12, 'bold'))
-        #self.status_lbl.grid(row=4, column=0, sticky='EWNS')
-
+        # left time and status
         self.left_time_value = StringVar()
-        self.left_time_lbl = Label(self.parent,
-                              font=('monospace', 12, 'bold'),
-                              textvariable=self.left_time_value)
-        self.left_time_lbl.grid(row=4, column=0, columnspan=3,
-                                sticky='EWNS')
+        self.left_time_lbl = Label(self.parent, textvariable=self.left_time_value,
+                                   font=('monospace', 12, 'bold'))
+        self.left_time_lbl.grid(row=3, column=0, columnspan=4, sticky='EWNS')
+
+        # task
+        self.task_value = StringVar()
+        self.task_lbl = Label(self.parent, text='Task:')
+        self.task_lbl.grid(row=4, column=0, sticky='E')
+        self.task_entry = Entry(self.parent, textvariable=self.task_value)
+        self.task_entry.grid(row=4, column=1)
+        self.edit_btn = Button(self.parent, text='Edit',
+                               command=self.edit_cmd)
+        self.edit_btn.grid(row=4, column=2)
+        self.save_btn = Button(self.parent, text='Save',
+                               command=self.save_cmd)
+        self.save_btn.grid(row=4, column=3)
 
         # pomodoro list
         self.pomodoro_list = MultiListbox(self.parent,
@@ -93,7 +84,7 @@ class PomodoroTk(Frame):
                                            ('End', 10),
                                            ('Task', 15),
                                            ('Status', 5)))
-        self.pomodoro_list.grid(row=5, column=0, columnspan=3)
+        self.pomodoro_list.grid(row=5, column=0, columnspan=4)
 
         # data initialize
         self.pomodoro_time_value.set(25)
@@ -107,32 +98,12 @@ class PomodoroTk(Frame):
         self.left_time_value.set('{0:<10}{1:>8}'.format(status, 
                               self.time_format(self.left_time)))
         if status == self.STATUS_IDLE:
-            self.start_btn.configure(text=self.LBL_START,
-                                     state='normal')
-            self.cancel_btn.configure(text=self.LBL_CANCEL,
-                                      state='disabled')
-            self.rest_btn.configure(text=self.LBL_REST,
-                                    state='disabled')
-            #self.status_lbl.configure(text=self.STATUS_IDLE,
-            #                          bg=self.COLOR_IDLE)
+            self.start_btn.configure(text=self.LBL_START)
             self.left_time_lbl.configure(bg=self.COLOR_IDLE)
         elif status == self.STATUS_WORKING:
-            self.start_btn.configure(text=self.LBL_PAUSE)
-            self.cancel_btn.configure(state='normal')
-            self.rest_btn.configure(state='normal')
-            #self.status_lbl.configure(text=self.STATUS_WORKING,
-            #                          bg=self.COLOR_WORKING)
+            self.start_btn.configure(text=self.LBL_CANCEL)
             self.left_time_lbl.configure(bg=self.COLOR_WORKING)
-        elif status == self.STATUS_PAUSED:
-            self.start_btn.configure(text=self.LBL_CONTINUE)
-            #self.status_lbl.configure(text=self.STATUS_PAUSED,
-            #                          bg=self.COLOR_PAUSED)
-            self.left_time_lbl.configure(bg=self.COLOR_PAUSED)
         elif status == self.STATUS_RESTING:
-            self.start_btn.configure(text=self.LBL_PAUSE)
-            self.rest_btn.configure(state='disabled')
-            #self.status_lbl.configure(text=self.STATUS_RESTING,
-            #                          bg=self.COLOR_RESTING)
             self.left_time_lbl.configure(bg=self.COLOR_RESTING)
         else:
             pass
@@ -200,19 +171,13 @@ class PomodoroTk(Frame):
                 self.paused = False
         self.update()
 
-    # command of Rest button
-    def rest_cmd(self):
-        self.left_time_lbl.after_cancel(self.after_id)
-        if self.status == self.STATUS_WORKING:
-            if askokcancel('Question', 'Do you really want to '
-                  'terminal the Pomodoro and have a Rest Now?'):
-                self.pomodoro_time -= (self.left_time + 1)
-                self.left_time = 0
-                if self.paused:
-                    self.paused = False
-        else:
-            pass
-        self.update()
+    # command of Edit button
+    def edit_cmd(self):
+        pass
+
+    # command of Save button
+    def save_cmd(self):
+        pass
 
     # count down
     def update(self):
