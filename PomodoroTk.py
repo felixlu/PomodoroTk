@@ -12,6 +12,9 @@ date:    2011-08-20
 
 from tkinter import Tk, Entry, Label, Button, Frame, StringVar
 from tkinter.messagebox import showinfo, showerror, askokcancel
+from multilistbox import MultiListbox
+import sqlite3
+import os
 
 
 class PomodoroTk(Frame):
@@ -82,6 +85,15 @@ class PomodoroTk(Frame):
                               textvariable=self.left_time_value)
         self.left_time_lbl.grid(row=4, column=0, columnspan=3,
                                 sticky='EWNS')
+
+        # pomodoro list
+        self.pomodoro_list = MultiListbox(self.parent,
+                                          (('No.', 5),
+                                           ('Start', 10),
+                                           ('End', 10),
+                                           ('Task', 15),
+                                           ('Status', 5)))
+        self.pomodoro_list.grid(row=5, column=0, columnspan=3)
 
         # data initialize
         self.pomodoro_time_value.set(25)
@@ -278,6 +290,19 @@ class PomodoroTk(Frame):
             time_min = time_in_sec // 60
             return '{0:0>2}:{1:0>2}'.format(time_min, time_sec)
 
+    # database initialize
+    def init_db(self):
+        self.cur.execute("""
+            create table Pomodoro (
+                id         integer primary key autoincrement,
+                start_time text,
+                end_time   text,
+                task       text,
+                is_valid   integer
+            );
+        """)
+        self.con.commit()
+
     def __init__(self, parent):
         super().__init__(parent)
         self.parent = parent
@@ -305,6 +330,16 @@ class PomodoroTk(Frame):
         self.STATUS_CANCELLED = 'Cancelled'
 
         self.create_widgets()
+        
+        self.db_name = 'pomodoroTk.db'
+        self.db_path = os.path.join(os.path.expanduser('~'), self.db_name)
+        
+        self.con = sqlite3.connect(self.db_path)
+        self.con.isolation_level = None
+        self.cur = self.con.cursor()
+
+        if not os.path.isfile(self.db_path):
+            self.init_db()
 
         # data initialize
         self.pomodoro_time = 0
