@@ -78,8 +78,8 @@ class PomodoroTk(Frame):
 
         # pomodoro list
         self.pomodoro_list = MultiListbox(self.parent,
-            (('No.', 5), ('Date', 10), ('Start', 10), ('End', 10), ('Task', 30), 
-                ('Status', 10)))
+            (('No.', 5), ('Task', 30), ('Status', 10), ('Date', 10), 
+                ('Start', 10), ('Minutes', 7)))
         self.pomodoro_list.grid(row=4, column=0, columnspan=4)
 
         # data initialize
@@ -121,8 +121,7 @@ class PomodoroTk(Frame):
                     self.task_content = self.get_task()
                     if self.task_content:
                         # get start time
-                        self.task_date = time.strftime('%Y-%m-%d')
-                        self.task_start_time = time.strftime('%H:%M:%S')
+                        self.task_start_time = time.time()
                         # reset status and indicator
                         self.status = self.STATUS_WORKING
                         self.left_time = self.pomodoro_time
@@ -265,9 +264,11 @@ class PomodoroTk(Frame):
             self.task_is_valid = 1
         else:
             self.task_is_valid = 0
-        self.task_end_time = time.strftime('%H:%M:%S')
-        task = (self.task_date, self.task_start_time, self.task_end_time, 
-            self.task_content, self.task_is_valid)
+        self.task_end_time = time.time()
+        date = time.strftime('%Y-%m-%d', time.localtime(self.task_start_time))
+        start = time.strftime('%H:%M:%S', time.localtime(self.task_start_time))
+        minutes = (self.task_end_time - self.task_start_time) // 60
+        task = (self.task_content, self.task_is_valid, date, start, minutes)
         insert_task(con, cur, task)
         self.refresh_task_list()
     
@@ -282,7 +283,7 @@ class PomodoroTk(Frame):
             self.number_to_id.append(row[0])
             i += 1
             self.pomodoro_list.insert(self.pomodoro_list.size(), 
-                (i, row[1], row[2], row[3], row[4], self.TASK_STATUS[row[5]]))
+                (i, row[1], self.TASK_STATUS[row[2]], row[3], row[4], row[5]))
 
     def __init__(self, parent, con, cur):
         super().__init__(parent)
@@ -334,24 +335,24 @@ def init_db(con, cur):
     cur.execute("""
         CREATE TABLE Pomodoro (
             id         integer primary key autoincrement,
+            task       text,
+            is_valid   integer,
             date       text,
             start_time text,
-            end_time   text,
-            task       text,
-            is_valid   integer
+            duration   integer
         );
     """)
     con.commit()
 
 def get_all_tasks(cur):
-    query = """SELECT id, date, start_time, end_time, task, is_valid 
+    query = """SELECT id, task, is_valid, date, start_time, duration 
         FROM Pomodoro;"""
     cur.execute(query)
     return cur.fetchall()
     
 def insert_task(con, cur, task):
     query = """
-        INSERT INTO Pomodoro (date, start_time, end_time, task, is_valid)
+        INSERT INTO Pomodoro (task, is_valid, date, start_time, duration)
         VALUES('{0[0]}', '{0[1]}', '{0[2]}', '{0[3]}', '{0[4]}');""".format(task)
     cur.execute(query)
     con.commit()
