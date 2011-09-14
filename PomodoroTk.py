@@ -6,16 +6,19 @@ PomodoroTk is a simple timer based on The Pomodoro Technique
 ( www.pomodorotechnique.com ), written in Python 3 and Tkinter.
 author:  Felix Lu
 email:   lugh82@gmail.com
-version: 0.3
-date:    2011-09-09
+version: 0.4
+date:    2011-09-15
 '''
 
-from tkinter import Tk, Entry, Label, Button, Frame, StringVar
-from tkinter.messagebox import showinfo, showerror, askokcancel
-from multilistbox import MultiListbox
-import sqlite3
 import os
 import time
+import sqlite3
+from tkinter import Tk, Entry, Label, Button, Frame, StringVar
+from tkinter.messagebox import showinfo, showerror, askokcancel
+
+from multilistbox import MultiListbox
+
+from dlgCalendar import tkCalendar
 
 
 class PomodoroTk(Frame):
@@ -59,12 +62,6 @@ class PomodoroTk(Frame):
         self.start_btn = Button(self.parent, command=self.start_cmd)
         self.start_btn.grid(row=2, column=2)
 
-        # left time and status
-        self.left_time_value = StringVar()
-        self.left_time_lbl = Label(self.parent,
-            textvariable=self.left_time_value, font=('monospace', 12, 'bold'))
-        self.left_time_lbl.grid(row=5, column=0, columnspan=4, sticky='EWNS')
-
         # task
         self.task_value = StringVar()
         self.task_lbl = Label(self.parent, text='Task:')
@@ -76,16 +73,36 @@ class PomodoroTk(Frame):
         self.save_btn = Button(self.parent, text='Save', command=self.save_cmd)
         self.save_btn.grid(row=3, column=3)
 
+        # date
+        self.date_var = StringVar()
+        self.date_lbl = Label(self.parent, text='Date:')
+        self.date_lbl.grid(row=4, column=0, sticky='E')
+        self.date_entry = Entry(self.parent, textvariable=self.date_var)
+        self.date_entry.grid(row=4, column=1)
+        self.get_date_btn = Button(self.parent, text='Get Date',
+            command=self.get_date_cmd)
+        self.get_date_btn.grid(row=4, column=2)
+        self.search_btn = Button(self.parent, text='Search',
+            command=self.search_cmd)
+        self.search_btn.grid(row=4, column=3)
+
         # pomodoro list
         self.pomodoro_list = MultiListbox(self.parent,
-            (('No.', 5), ('Task', 30), ('Status', 10), ('Date', 10),
-                ('Start', 10), ('Minutes', 7)))
-        self.pomodoro_list.grid(row=4, column=0, columnspan=4)
+            (('No.', 3), ('Task', 30), ('Status', 10), ('Date', 11),
+            ('Start', 9), ('Minutes', 5)))
+        self.pomodoro_list.grid(row=5, column=0, columnspan=4)
+
+        # left time and status
+        self.left_time_value = StringVar()
+        self.left_time_lbl = Label(self.parent,
+            textvariable=self.left_time_value, font=('monospace', 12, 'bold'))
+        self.left_time_lbl.grid(row=6, column=0, columnspan=4, sticky='EWNS')
 
         # data initialize
         self.pomodoro_time_value.set(25)
         self.rest_time_value.set(5)
         self.cycle_value.set(4)
+        self.date_var.set(time.strftime('%Y-%m-%d', time.localtime()))
         self.left_time_value.set('{0:<10}{1:>8}'.format(
             self.STATUS_IDLE, '00:00'))
 
@@ -170,10 +187,24 @@ class PomodoroTk(Frame):
             if self.editing_task_id != -1:
                 task = (self.editing_task_id, ) + (self.task_content, )
                 update_task(self.con, self.cur, task)
-                self.refresh_task_list()
+                self.search_cmd()
                 self.editing_task_id = -1
         else:
             showerror('Invalid input', '"Task" can not be empty!')
+
+    def get_date_cmd(self):
+    # command of select date from calendar
+        tkCalendar(self.parent, self.this_year, self.this_month, self.today,
+            self.date_var)
+
+    def search_cmd(self):
+    # command of search pomodoro by date, empty for all pomodoros
+        date = self.date_var.get()
+        if date:
+            rows = get_tasks_by_date(self.cur, date)
+        else:
+            rows = get_all_tasks(self.cur)
+        self.refresh_task_list(rows)
 
     def update(self):
     # count down
@@ -191,7 +222,7 @@ class PomodoroTk(Frame):
             if self.cycle_count > 1:
                 showinfo('Information',
                     'You have worked for {0}, have a break now.'.format(
-                        time_format(self.pomodoro_time)))
+                    time_format(self.pomodoro_time)))
                 # get task end time and insert to db
                 self.task_finished(True)
                 # reset Left Time to Rest Time
@@ -204,7 +235,7 @@ class PomodoroTk(Frame):
             else:
                 showinfo('Information',
                     'You have finished all Pomodoro cycles. '
-                        'Have a longer break now.')
+                    'Have a longer break now.')
                 self.task_finished(True)
                 self.continue_cycle = False
                 self.status = self.STATUS_IDLE
@@ -216,11 +247,10 @@ class PomodoroTk(Frame):
             self.status = self.STATUS_IDLE
             if askokcancel('Question',
                 'You have finished a Pomodoro cycle. '
-                    'Do you want to continue?'):
-                        self.continue_cycle = True
-                        self.start_cmd()
+                'Do you want to continue?'):
+                    self.continue_cycle = True
+                    self.start_cmd()
             else:
-                self.continue_cycle = False
                 self.update_widgets(self.status)
 
         elif self.status == self.STATUS_W_CANCELLED:
@@ -241,14 +271,8 @@ class PomodoroTk(Frame):
     # display message for invalid input
         showerror('Invalid Input',
             'Invalid input. "{0}" must be Integer and greater than 0.'.format(
-                var_name))
+            var_name))
 
-#    def get_task(self):
-#        task = self.task_value.get()
-#        if task:
-#            return task
-#        else:
-#            return None
     def task_finished(self, task_is_valid):
         if task_is_valid:
             self.task_is_valid = 1
@@ -261,14 +285,14 @@ class PomodoroTk(Frame):
         minutes = (self.task_end_time - self.task_start_time) // 60
         task = (self.task_content, self.task_is_valid, date, start, minutes)
         insert_task(con, cur, task)
-        self.refresh_task_list()
+        self.search_cmd()
 
-    def refresh_task_list(self):
+    def refresh_task_list(self, rows):
         list_size = self.pomodoro_list.size()
         if list_size > 0:
             del(self.number_to_id[:])
             self.pomodoro_list.delete(0, list_size-1)
-        rows = get_all_tasks(self.cur)
+        #rows = get_all_tasks(self.cur)
         i = 0
         for row in rows:
             self.number_to_id.append(row[0])
@@ -305,6 +329,10 @@ class PomodoroTk(Frame):
 
         self.TASK_STATUS = ['Cancelled', 'Finished']
 
+        self.this_year = time.localtime()[0]
+        self.this_month = time.localtime()[1]
+        self.today = time.localtime()[2]
+
         self.create_widgets()
 
         # data initialize
@@ -325,7 +353,7 @@ class PomodoroTk(Frame):
         self.number_to_id = []
 
         self.update_widgets(self.status)
-        self.refresh_task_list()
+        self.search_cmd()
 
 
 def time_format(time_in_sec):
@@ -357,12 +385,12 @@ def init_db(con, cur):
     # database initialize
     cur.execute("""
         CREATE TABLE Pomodoro (
-            id         integer primary key autoincrement,
-            task       text,
-            is_valid   integer,
-            date       text,
-            start_time text,
-            duration   integer
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            task       TEXT,
+            is_valid   INTEGER,
+            date       TEXT,
+            start_time TEXT,
+            duration   INTEGER
             );
         """)
     con.commit()
@@ -372,6 +400,16 @@ def get_all_tasks(cur):
     query = """SELECT id, task, is_valid, date, start_time, duration
         FROM Pomodoro;
         """
+    cur.execute(query)
+    return cur.fetchall()
+
+
+def get_tasks_by_date(cur, date):
+    query = """SELECT id, task, is_valid, date, start_time, duration
+        FROM Pomodoro
+        WHERE
+        date='{0}';
+        """.format(date)
     cur.execute(query)
     return cur.fetchall()
 
