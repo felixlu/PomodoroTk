@@ -220,7 +220,8 @@ class PomodoroTk(Frame):
                         self.continue_cycle = True
                         self.start_cmd()
             else:
-                pass
+                self.continue_cycle = False
+                self.update_widgets(self.status)
 
         elif self.status == self.STATUS_W_CANCELLED:
         # Cancel work
