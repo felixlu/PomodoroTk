@@ -1,0 +1,21 @@
+Introduction
+
+PomodoroTK is a simple Pomodoro Timer written with Python 3 and Tkinter.
+
+
+Author
+
+Felix Lu <lugh82@gmail.com>
+
+
+Run
+
+Just put the main file: 
+PomodoroTK.py, 
+
+and the dependencies: 
+dlgCalendar.py, multilistbox.py
+
+to the same folder and run the main file:
+
+ $ python3 PomodoroTK.py
