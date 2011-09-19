@@ -3,3 +3,6 @@
 *.DS_Store
 __pycache__
 *.bak
+build
+dist
+*.db
