@@ -22,29 +22,31 @@ from dlgCalendar import tkCalendar
 
 
 class PomodoroTk(Frame):
-    
+
     def __init__(self, parent, con, cur):
         super().__init__(parent)
         self.parent = parent
         self.con = con
         self.cur = cur
         self.grid(row=0, column=0)
-        
+
         # UI Constants
         self.START = 'Start'
         self.CANCEL = 'Cancel'
-        
+
         self.COLOR_IDLE = 'red'
         self.COLOR_WORKING = 'green'
         self.COLOR_RESTING = 'yellow'
-        
+
         self.IDLE = 'Idle'
         self.WORKING = 'Working'
         self.RESTING = 'Resting'
-        
+
         self.STATUS_LEFT_TIME_FORMAT = '{0:<10}{1:>8}'
         self.DATE_FORMAT_YMD = '%Y-%m-%d'
         self.TIME_FORMAT_HMS = '%H:%M:%S'
+
+        self.IDLE_REMINDER = 10     # in Minutes
 
         # Data initialize
         self.this_year = time.localtime()[0]
@@ -54,10 +56,12 @@ class PomodoroTk(Frame):
         self.pomodoro_time = 0
         self.rest_time = 0
         self.left_time = 0
-        self.after_id = 0               # for canceling .after
-        self.status = self.IDLE  # indicator of pomodoro status
+        self.after_id = 0              # for canceling .after
+        self.status = self.IDLE         # indicator of pomodoro status
         self.cycle_count = 0
         self.continue_cycle = False
+        self.idle_time = 0
+        self.idle_id = 0
 
         # Task data
         self.TASK_STATUS = ['Cancelled', 'Finished']
@@ -72,6 +76,7 @@ class PomodoroTk(Frame):
         self.create_widgets()
         self.update_widgets()
         self.cmd_search()
+        self.idle_check()
 
     def create_widgets(self):
         # Pomodoro label and input field
@@ -115,13 +120,13 @@ class PomodoroTk(Frame):
         self.task_var = StringVar()
         self.lbl_task = Label(self.parent, text='Task:')
         self.lbl_task.grid(row=3, column=0, sticky='E')
-        
+
         self.entry_task = Entry(self.parent, textvariable=self.task_var)
         self.entry_task.grid(row=3, column=1)
-        
+
         self.btn_edit = Button(self.parent, text='Edit', command=self.cmd_edit)
         self.btn_edit.grid(row=3, column=2)
-        
+
         self.btn_save = Button(self.parent, text='Save', command=self.cmd_save)
         self.btn_save.grid(row=3, column=3)
 
@@ -129,14 +134,14 @@ class PomodoroTk(Frame):
         self.date_var = StringVar()
         self.lbl_date = Label(self.parent, text='Date:')
         self.lbl_date.grid(row=4, column=0, sticky='E')
-        
+
         self.entry_date = Entry(self.parent, textvariable=self.date_var)
         self.entry_date.grid(row=4, column=1)
-        
+
         self.btn_get_date = Button(self.parent, text='Get Date',
             command=self.cmd_get_date)
         self.btn_get_date.grid(row=4, column=2)
-        
+
         self.btn_search = Button(self.parent, text='Search',
             command=self.cmd_search)
         self.btn_search.grid(row=4, column=3)
@@ -178,6 +183,8 @@ class PomodoroTk(Frame):
     def cmd_start(self):
         # start from Idle
         if self.status == self.IDLE:
+            self.idle_time = 0
+            self.lbl_left_time.after_cancel(self.idle_id)
             if not self.continue_cycle:
                 # get verified input
                 self.pomodoro_time = get_int(self.pomodoro_time_var.get()) * 60
@@ -201,8 +208,11 @@ class PomodoroTk(Frame):
                 self.invalid_input_msg_of('Pomodoro')
 
         # cancel work or rest
-        else:
+        elif self.status == self.WORKING or self.status == self.RESTING:
             self.cmd_cancel()
+
+        else:
+            pass
 
     def cmd_cancel(self):
         self.lbl_left_time.after_cancel(self.after_id)
@@ -221,21 +231,22 @@ class PomodoroTk(Frame):
         self.left_time_var.set(self.STATUS_LEFT_TIME_FORMAT.format(
              self.status, time_format(self.left_time)))
 
-        # Pomodoro or Rest not finished
+        # Work or Rest not finished
         if self.left_time > 0:
             self.left_time -= 1
             self.after_id = self.lbl_left_time.after(1000, self.count_down)
         else:
             self.change_status()
-    
+
     def change_status(self):
-        # Pomodoro finished
+        # Work finished
         if self.status == self.WORKING:
             if self.task_is_cancelled:
                 self.get_and_add_task()
                 self.status = self.IDLE
                 self.update_widgets()
                 self.task_is_cancelled = False
+                self.idle_check()
             else:
                 # cycles not finished
                 if self.cycle_count > 1:
@@ -250,12 +261,13 @@ class PomodoroTk(Frame):
                 # all cycles finished
                 else:
                     showinfo('Information',
-                        'You have finished all Pomodoro cycles. '
-                        'Have a longer break now.')
+                        'You have finished all Pomodoro cycles. \
+                        Have a longer break now.')
                     self.get_and_add_task()
                     self.continue_cycle = False
                     self.status = self.IDLE
                     self.update_widgets()
+                    self.idle_check()
 
         # Rest finished
         elif self.status == self.RESTING:
@@ -263,16 +275,18 @@ class PomodoroTk(Frame):
                 self.status = self.IDLE
                 self.update_widgets()
                 self.task_is_cancelled = False
+                self.idle_check()
             else:
                 self.cycle_count -= 1
                 self.status = self.IDLE
                 if askokcancel('Question',
-                    'You have finished a Pomodoro cycle. '
-                    'Do you want to continue?'):
+                    'You have finished a Pomodoro cycle. \
+                    Do you want to continue?'):
                         self.continue_cycle = True
                         self.cmd_start()
                 else:
                     self.update_widgets()
+                    self.idle_check()
 
         else:
             pass
@@ -285,9 +299,9 @@ class PomodoroTk(Frame):
         else:
             task_is_valid = 1
         self.task_end_time = time.time()
-        date = time.strftime(self.DATE_FORMAT_YMD, 
+        date = time.strftime(self.DATE_FORMAT_YMD,
             time.localtime(self.task_start_time))
-        start = time.strftime(self.TIME_FORMAT_HMS, 
+        start = time.strftime(self.TIME_FORMAT_HMS,
             time.localtime(self.task_start_time))
         minutes = (self.task_end_time - self.task_start_time) // 60
         task = (self.task_content, task_is_valid, date, start, minutes)
@@ -349,6 +363,21 @@ class PomodoroTk(Frame):
             return self.number_to_id[list_no]
         else:
             return None
+
+    def idle_check(self):
+        if self.IDLE_REMINDER <= 0:
+            pass
+        else:
+            if self.idle_time < self.IDLE_REMINDER:
+                self.idle_time += 1
+                self.idle_id = self.lbl_left_time.after(60000, self.idle_check)
+            else:
+                if askokcancel('Question', "You've idled for {0} minutes. Do \
+                    you want to start working now?".format(self.IDLE_REMINDER)):
+                    self.cmd_start()
+                else:
+                    self.idle_time = 0
+                    self.idle_check()
 
 
 def time_format(time_in_sec):
