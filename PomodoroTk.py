@@ -6,8 +6,9 @@ PomodoroTk is a simple timer based on The Pomodoro Technique
 ( www.pomodorotechnique.com ), written in Python 3 and Tkinter.
 author:  Felix Lu
 email:   lugh82@gmail.com
-version: 0.4
-date:    2011-09-15
+version: 0.5
+date:    2011-10-05
+license: GNU GPL
 '''
 
 import os
