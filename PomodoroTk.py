@@ -6,8 +6,8 @@ PomodoroTk is a simple timer based on The Pomodoro Technique
 ( www.pomodorotechnique.com ), written in Python 3 and Tkinter.
 author:  Felix Lu
 email:   lugh82@gmail.com
-version: 0.5
-date:    2011-10-05
+version: 0.6
+date:    2011-10-20
 license: GNU GPL
 '''
 
@@ -318,6 +318,7 @@ class PomodoroTk(Frame):
 
     def cmd_save(self):
         self.task_content = self.task_var.get()
+        print(self.task_content)
         if self.task_content:
             if self.editing_task_id != -1:
                 task = (self.editing_task_id, ) + (self.task_content, )
@@ -433,9 +434,9 @@ def get_tasks_by_date(cur, date):
     query = """SELECT id, task, is_valid, date, start_time, duration
         FROM Pomodoro
         WHERE
-        date='{0}';
-        """.format(date)
-    cur.execute(query)
+        date=?;
+        """
+    cur.execute(query, (date,))
     return cur.fetchall()
 
 
@@ -444,18 +445,18 @@ def insert_task(con, cur, task):
         INSERT INTO Pomodoro
         (task, is_valid, date, start_time, duration)
         VALUES
-        ('{0[0]}', '{0[1]}', '{0[2]}', '{0[3]}', '{0[4]}');
-        """.format(task)
-    cur.execute(query)
+        (?, ?, ?, ?, ?);
+        """
+    cur.execute(query, task)
     con.commit()
 
 
 def get_task_by_id(con, cur, task_id):
     query = """
         SELECT id, task FROM Pomodoro
-        WHERE id='{0}';
-        """.format(task_id)
-    cur.execute(query)
+        WHERE id=?;
+        """
+    cur.execute(query, task_id)
     row = cur.fetchone()
     return row[1]
 
@@ -463,19 +464,19 @@ def get_task_by_id(con, cur, task_id):
 def update_task(con, cur, task):
     query = """
         UPDATE Pomodoro
-        SET task='{0[1]}'
-        WHERE id='{0[0]}';
-        """.format(task)
-    cur.execute(query)
+        SET task=?
+        WHERE id=?;
+        """
+    cur.execute(query, (task[1], task[0]))
     con.commit()
 
 
 def delete_task(con, cur, task_id):
     query = """
         DELETE FROM Task
-        WHERE id='{0}';
-        """.format(task_id)
-    cur.execute(query)
+        WHERE id=?;
+        """
+    cur.execute(query, task_id)
     con.commit()
 
 
