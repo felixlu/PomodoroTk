@@ -318,7 +318,6 @@ class PomodoroTk(Frame):
 
     def cmd_save(self):
         self.task_content = self.task_var.get()
-        print(self.task_content)
         if self.task_content:
             if self.editing_task_id != -1:
                 task = (self.editing_task_id, ) + (self.task_content, )
@@ -436,7 +435,7 @@ def get_tasks_by_date(cur, date):
         WHERE
         date=?;
         """
-    cur.execute(query, (date,))
+    cur.execute(query, (date, ))
     return cur.fetchall()
 
 
@@ -456,7 +455,7 @@ def get_task_by_id(con, cur, task_id):
         SELECT id, task FROM Pomodoro
         WHERE id=?;
         """
-    cur.execute(query, task_id)
+    cur.execute(query, (task_id, ))
     row = cur.fetchone()
     return row[1]
 
@@ -476,7 +475,7 @@ def delete_task(con, cur, task_id):
         DELETE FROM Task
         WHERE id=?;
         """
-    cur.execute(query, task_id)
+    cur.execute(query, (task_id, ))
     con.commit()
 
 
