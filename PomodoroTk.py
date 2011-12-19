@@ -286,6 +286,7 @@ class PomodoroTk(Frame):
                         self.continue_cycle = True
                         self.cmd_start()
                 else:
+                    self.continue_cycle = False
                     self.update_widgets()
                     self.idle_check()
 
