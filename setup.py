@@ -24,10 +24,10 @@ GUI2Exe_Target_1 = Executable(
     # what to build
     script = "PomodoroTk.py",
     initScript = None,
-    #base = 'Win32GUI',
+    base = 'Win32GUI',
     #targetDir = r"dist",
     #targetName = "PomodoroTk",
-    compress = False,
+    compress = True6›,
     copyDependentFiles = True,
     appendScriptToExe = False,
     appendScriptToLibrary = False,
