@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-'''
+"""
 PomodoroTk is a simple timer based on The Pomodoro Technique
-( www.pomodorotechnique.com ), written in Python 3 and Tkinter.
+( www.pomodorotechnique.com ), written in Python 3 and using its
+embedded UI library Tkinter.
+
 author:  Felix Lu
 email:   lugh82@gmail.com
-version: 0.6
-date:    2011-10-20
+version: 0.7
+date:    2014-05-10
 license: GNU GPL
-'''
+"""
 
+import sys
 import os
 import time
 import sqlite3
@@ -262,8 +265,7 @@ class PomodoroTk(Frame):
                 # all cycles finished
                 else:
                     showinfo('Information',
-                        'You have finished all Pomodoro cycles. \
-                        Have a longer break now.')
+                        'You have finished all Pomodoro cycles. Have a longer break now.')
                     self.get_and_add_task()
                     self.continue_cycle = False
                     self.status = self.IDLE
@@ -281,8 +283,7 @@ class PomodoroTk(Frame):
                 self.cycle_count -= 1
                 self.status = self.IDLE
                 if askokcancel('Question',
-                    'You have finished a Pomodoro cycle. \
-                    Do you want to continue?'):
+                    'You have finished a Pomodoro cycle. Do you want to continue?'):
                         self.continue_cycle = True
                         self.cmd_start()
                 else:
@@ -374,8 +375,8 @@ class PomodoroTk(Frame):
                 self.idle_time += 1
                 self.idle_id = self.lbl_left_time.after(60000, self.idle_check)
             else:
-                if askokcancel('Question', "You've idled for {0} minutes. Do \
-                    you want to start working now?".format(self.IDLE_REMINDER)):
+                if askokcancel('Question', "You've idled for {0} minutes. Do you want to start working now?".format(
+                        self.IDLE_REMINDER)):
                     self.cmd_start()
                 else:
                     self.idle_time = 0
@@ -481,8 +482,12 @@ def delete_task(con, cur, task_id):
 
 
 if __name__ == '__main__':
+    if getattr(sys, 'frozen', False):
+        script_path = os.path.dirname(sys.executable)
+    else:
+        script_path = os.path.dirname(os.path.realpath(__file__))
     db_name = 'pomodoroTk.db'
-    db_path = os.path.join(os.path.expanduser('~'), db_name)
+    db_path = os.path.join(script_path, db_name)
 
     needs_init = False
     if not os.path.isfile(db_path):
@@ -499,7 +504,9 @@ if __name__ == '__main__':
             print(e)
 
     app = Tk()
+    app.resizable(width=False, height=False)
     app.title('PomodoroTk')
+    app.wm_iconbitmap('PomodoroTk.ico')
     window = PomodoroTk(app, con, cur)
     app.mainloop()
     con.close()
